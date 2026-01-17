@@ -1,283 +1,177 @@
-# 🚮 Automated Incident Report Workflow
+# 🚮 Incident Reporting & Vector Store Automation
 
-> An intelligent n8n workflow for automated waste management incident reporting with AI-powered duplicate detection and smart routing.
+**Intelligent n8n workflows** for automated waste management incident handling
 
-![n8n](https://img.shields.io/badge/n8n-Workflow-EA4B71?style=flat-square)
-![MongoDB](https://img.shields.io/badge/MongoDB-Database-47A248?style=flat-square&logo=mongodb&logoColor=white)
-![Groq](https://img.shields.io/badge/Groq-AI-orange?style=flat-square)
-![Gmail](https://img.shields.io/badge/Gmail-Integration-EA4335?style=flat-square&logo=gmail&logoColor=white)
+* vector database migration for semantic search & future AI capabilities.
 
----
-
-## 📋 Overview
-
-This workflow automates the entire lifecycle of citizen-reported waste management incidents. It intelligently processes incoming email reports, extracts structured data using AI, detects duplicates, and routes notifications appropriately—all without manual intervention.
-
-### 🎯 Key Features
-
-- **📧 Email Monitoring**: Automatic polling of Gmail inbox for new incident reports
-- **🤖 AI-Powered Extraction**: Uses Groq LLM to extract structured incident data from natural language emails
-- **🔍 Duplicate Detection**: Intelligent similarity-based duplicate detection using MongoDB queries
-- **📊 Priority Classification**: Automatic incident priority assignment (low/medium/high)
-- **🔄 Smart Routing**: Conditional logic to notify admins for new incidents or inform citizens about duplicates
-- **💾 MongoDB Integration**: Seamless database queries for duplicate checking
-- **✉️ Automated Responses**: AI-generated contextual email replies
+<p align="center">
+  <img src="https://img.shields.io/badge/n8n-Workflow-EA4B71?style=flat-square" />
+  <img src="https://img.shields.io/badge/MongoDB-47A248?style=flat-square&logo=mongodb&logoColor=white" />
+  <img src="https://img.shields.io/badge/Pinecone-VectorDB-FF6F61?style=flat-square" />
+  <img src="https://img.shields.io/badge/Google%20Gemini-Embeddings-4285F4?style=flat-square&logo=google" />
+  <img src="https://img.shields.io/badge/Groq-AI-orange?style=flat-square" />
+  <img src="https://img.shields.io/badge/Gmail-EA4335?style=flat-square&logo=gmail&logoColor=white" />
+</p>
 
 ---
 
-## 🏗️ Workflow Architecture
+## 📖 Overview
 
+This repository contains **two complementary n8n workflows** designed for modern municipal waste management:
+
+### 1️⃣ Incident Report Automation
+
+* Monitors **Gmail**
+* Extracts structured data using **AI**
+* Detects duplicates
+* Classifies priority
+* Routes notifications intelligently
+
+### 2️⃣ Vector Store Migration & Embedding
+
+* Reads existing incidents from **MongoDB**
+* Chunks & embeds using **Google Gemini**
+* Upserts into **Pinecone Vector Database**
+* Preserves original MongoDB `_id` in metadata for traceability
+
+📌 Both workflows share the same MongoDB **`incidents`** collection and form the foundation for:
+
+* Semantic search
+* Similarity analysis
+* RAG applications
+* Future AI enhancements
+
+---
+
+## ✨ Features
+
+### 🚨 Incident Report Workflow
+
+* Real-time Gmail inbox monitoring
+* Groq-powered structured data extraction
+* Semantic + location-based duplicate detection
+* Automatic priority scoring (low / medium / high)
+* Conditional routing (citizen reply vs admin alert)
+* Contextual AI-generated email responses
+
+### 🧠 Vector Migration Workflow
+
+* Full or incremental migration from MongoDB
+* Smart text chunking & cleaning
+* High-quality embeddings using `gemini-embedding-001`
+* MongoDB `_id` stored as `metadata.original_id`
+* Efficient batch upsert to Pinecone
+* Ready for semantic search & similarity-based analytics
+
+---
+
+## 📂 Repository Structure
+
+```text
+├── incident-report/
+│   └── incident_report.json          # Main incident processing workflow
+├── vector-migration/
+│   └── vector_migration.json         # Vector database population workflow
+├── README.md
+└── docs/
 ```
-Gmail Trigger → Get Email → AI Extract Data → Format Fields → 
-Duplicate Check (AI + MongoDB) → Format Results → Condition Check
-                                                      ↓
-                         ┌────────────────────────────┴────────────────────────────┐
-                         ↓                                                         ↓
-                 [Duplicate Found]                                         [New Incident]
-                         ↓                                                         ↓
-              Generate Citizen Reply                                  Generate Admin Alert
-                         ↓                                                         ↓
-                Reply to Citizen Email                               Email Admin Notification
-```
 
 ---
 
-## 🔧 Prerequisites
+## 🛠️ Prerequisites
 
-Before running this workflow, ensure you have:
+* n8n (self-hosted or cloud, v1.0+ recommended)
+* MongoDB (with `incidents` collection)
+* Pinecone account & index
 
-- **n8n** installed and running (self-hosted or cloud)
-- **Gmail Account** with OAuth2 credentials configured
-- **MongoDB** database with an `incidents` collection
-- **Groq API** account and API key
-- Required n8n nodes:
-  - `@n8n/n8n-nodes-langchain` (AI Agent nodes)
-  - `n8n-nodes-base.gmail` (Gmail integration)
-  - `n8n-nodes-base.mongoDbTool` (MongoDB tool)
+  * 3072 dimensions recommended for Gemini
+* Google Gemini API key (embeddings)
+* Groq API key (LLM extraction & generation)
+* Gmail OAuth2 credentials
+* Community nodes:
+
+  * `@n8n/n8n-nodes-langchain`
+  * `n8n-nodes-base.gmail`
+  * `n8n-nodes-base.mongoDb`
 
 ---
 
-## ⚙️ Setup Instructions
+## 🚀 Quick Setup
 
-### 1. Clone or Import Workflow
-
-Import the `incident_report.json` file into your n8n instance:
+### 1️⃣ Import workflows
 
 ```bash
-# Via n8n UI
-Settings → Import from File → Select incident_report.json
+# Via n8n UI: Settings → Import from File
+# or CLI (self-hosted)
+n8n import:workflow --input=./incident-report/incident_report.json
+n8n import:workflow --input=./vector-migration/vector_migration.json
 ```
 
-### 2. Configure Credentials
+### 2️⃣ Configure credentials
 
-#### Gmail OAuth2
-1. Navigate to the **Gmail Trigger** node
-2. Click **Create New Credential**
-3. Follow Google OAuth2 setup instructions
-4. Grant necessary permissions (read, send, reply)
-
-#### MongoDB Connection
-1. Open the **Find documents in MongoDB** node
-2. Add MongoDB credentials:
-   - Connection String or Host/Port
-   - Database name
-   - Username/Password (if applicable)
-
-#### Groq API
-1. Navigate to the **Groq Chat Model** node
-2. Add your Groq API key
-3. Select your preferred model (default: llama-based models)
-
-### 3. Update Configuration
-
-Update these values in the workflow:
-
-| Node | Parameter | Description |
-|------|-----------|-------------|
-| `Find documents in MongoDB` | `collection` | Set to your incidents collection name (e.g., `"incidents"`) |
-| `Gmail` (Admin notification) | `sendTo` | Replace `azizmabrouk@ieee.org` with your admin email |
-| `Gmail Trigger` | `pollTimes` | Adjust polling frequency (default: every minute) |
+| Service       | Credential Type   | Used In                |
+| ------------- | ----------------- | ---------------------- |
+| Gmail         | OAuth2 API        | Trigger + Send nodes   |
+| MongoDB       | MongoDB           | All MongoDB operations |
+| Groq          | Groq API          | Chat Model nodes       |
+| Google Gemini | Google Gemini API | Embeddings sub-node    |
+| Pinecone      | Pinecone API      | Vector Store node      |
 
 ---
 
-## 🚀 How It Works
+## 🔄 How the Workflows Connect
 
-### 1️⃣ **Email Monitoring**
-The workflow continuously polls your Gmail inbox for new messages containing incident reports from citizens.
-
-### 2️⃣ **Data Extraction**
-When a new email arrives, an AI agent analyzes the content and extracts structured data:
-
-```json
-{
-  "description": "Extracted incident summary",
-  "location": "Street address or landmark",
-  "priority": "low | medium | high",
-  "reportedAt": "ISO 8601 timestamp",
-  "citizenId": "Extracted if mentioned",
-  "pickUpPointId": "Extracted if mentioned"
-}
-```
-
-**Priority Rules**:
-- `high` → Fire hazard, health risk, dangerous materials
-- `medium` → Road blockage, strong odor, significant obstruction
-- `low` → Regular waste accumulation
-
-### 3️⃣ **Duplicate Detection**
-The extracted incident is compared against existing MongoDB records using:
-- Semantic similarity analysis
-- Location matching
-- Description comparison
-
-A similarity score is calculated, and incidents with score ≥ 0.75 are flagged as duplicates.
-
-### 4️⃣ **Smart Routing**
-
-**If Duplicate Found** (isDuplicate=true AND similarityScore ≥ 0.75):
-- Generate personalized reply to citizen
-- Inform them the incident is already being handled
-- Reply to their original email thread
-
-**If New Incident**:
-- Generate admin notification with incident details
-- Send alert email to municipal admin
-- Admin can take action on the new report
-
----
-
-## 📊 Data Schema
-
-### Extracted Incident Format
-
-```json
-{
-  "_id": null,
-  "assignedTo": null,
-  "citizenId": "string | null",
-  "description": "string",
-  "imageUrl": null,
-  "location": "string",
-  "pickUpPointId": "string | null",
-  "priority": "low | medium | high",
-  "reportedAt": "2024-12-27T10:30:00.000Z",
-  "resolutionNotes": null,
-  "resolvedAt": null,
-  "status": "new"
-}
-```
-
-### Duplicate Check Response
-
-```json
-{
-  "isDuplicate": true,
-  "matchedIncidentId": "507f1f77bcf86cd799439011",
-  "similarityScore": 0.89,
-  "incidentDescription": "...",
-  "incidentLocation": "...",
-  "priority": "medium",
-  "reportedAt": "2024-12-27T10:30:00.000Z"
-}
+```text
+MongoDB ───────────────┐
+                       │
+Incident Report        │   Vector Migration
+   │                   │        │
+   ▼                   ▼        ▼
+Gmail → AI Extract → Duplicate Check
+                       MongoDB → Chunk → Embed (Gemini) → Pinecone
+   │                   │                   │
+   ▼                   ▼                   ▼
+Citizen/Admin Emails   New/Updated Record   Vector DB ready for search & RAG
 ```
 
 ---
 
-## 🎨 Customization
+## 🎯 Customization Suggestions
 
-### Modify AI System Prompts
-
-Each AI Agent node has a customizable system message. You can adjust:
-
-- **AI Agent2**: Incident extraction logic and field mapping
-- **AI Agent**: Duplicate detection criteria and similarity thresholds
-- **AI Agent1**: Admin notification email tone and format
-- **AI Agent3**: Citizen reply email style and content
-
-### Adjust Duplicate Threshold
-
-In the **If** node, modify the similarity score threshold:
-
-```json
-{
-  "leftValue": "={{ $json.similarityScore }}",
-  "rightValue": 0.75  // Change this value (0.0 - 1.0)
-}
-```
-
-### Add Additional Workflows
-
-Consider extending with:
-- Slack/Discord notifications
-- SMS alerts for high-priority incidents
-- Automatic ticket creation in project management tools
-- Image analysis if attachments are present
+* Switch to other embedders (Cohere, Voyage, OpenAI…)
+* Add metadata filtering in Pinecone queries
+* Implement incremental sync (only new/updated documents)
+* Build a semantic search API or chatbot
 
 ---
 
-## 🛡️ Security Considerations
+## ⚠️ Current Limitations & Workarounds
 
-- ✅ Use environment variables for sensitive credentials
-- ✅ Implement rate limiting on Gmail API calls
-- ✅ Validate and sanitize all email inputs
-- ✅ Use MongoDB query filters to prevent injection
-- ✅ Regularly rotate API keys
-- ✅ Monitor workflow execution logs for anomalies
+* **Pinecone Vector Store node auto-generates IDs**
+  → Store MongoDB `_id` as `metadata.original_id` for traceability
 
----
-
-## 🐛 Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| Gmail not triggering | Check OAuth2 token expiration; verify polling settings |
-| AI extraction fails | Ensure Groq API key is valid; check model availability |
-| MongoDB connection error | Verify connection string; check network/firewall rules |
-| Duplicates not detected | Confirm collection name is correct; verify data exists |
-| Emails not sending | Check Gmail API quotas; verify recipient addresses |
+* **Large collections may slow n8n**
+  → Use **Split In Batches** node before processing
 
 ---
 
-## 📈 Performance Optimization
+## 💬 Author & Contact
 
-- **Polling Interval**: Adjust based on expected incident volume
-- **AI Model Selection**: Choose faster models for lower latency
-- **MongoDB Indexing**: Create indexes on `location` and `description` fields
-- **Batch Processing**: Consider processing multiple emails in parallel
+**Mohamed Aziz Mabrouk**
+📅 January 2026
 
----
+Built with ❤️ for smarter waste management systems.
 
-## 🤝 Contributing
+Questions, improvements, or collaboration?
+👉 **Open an issue!** 
 
-Suggestions for improvements:
-
-1. Add image attachment processing
-2. Implement multi-language support
-3. Create a citizen-facing web form
-4. Add analytics dashboard integration
-5. Implement incident status update notifications
 
 ---
 
-## 📄 License
+## 🔗 Useful Resources
 
-This workflow is provided as-is for educational and operational purposes.
+* n8n Documentation
+* Pinecone Documentation
+* Google Gemini Embeddings
+* Groq API Reference
 
----
-
-## 👨‍💻 Author
-
-Built with ❤️ for modern municipal waste management
-
----
-
-## 🔗 Resources
-
-- [n8n Documentation](https://docs.n8n.io/)
-- [Groq API Docs](https://console.groq.com/docs)
-- [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-- [Gmail API Reference](https://developers.google.com/gmail/api)
-
----
-
-**Need help?** Open an issue or contact your system administrator.

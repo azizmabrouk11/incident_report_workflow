@@ -1,2 +1,27 @@
-\similarity-service\.env
-\.idea
+# Environment variables
+similarity-service/.env
+.env
+
+# IDE settings
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/

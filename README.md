@@ -1,177 +1,294 @@
 # 🚮 Incident Reporting & Vector Store Automation
 
-**Intelligent n8n workflows** for automated waste management incident handling
+**Automated incident processing and semantic search using n8n, MongoDB, and Pinecone vector databases**
 
-* vector database migration for semantic search & future AI capabilities.
-
-<p align="center">
-  <img src="https://img.shields.io/badge/n8n-Workflow-EA4B71?style=flat-square" />
-  <img src="https://img.shields.io/badge/MongoDB-47A248?style=flat-square&logo=mongodb&logoColor=white" />
-  <img src="https://img.shields.io/badge/Pinecone-VectorDB-FF6F61?style=flat-square" />
-  <img src="https://img.shields.io/badge/Google%20Gemini-Embeddings-4285F4?style=flat-square&logo=google" />
-  <img src="https://img.shields.io/badge/Groq-AI-orange?style=flat-square" />
-  <img src="https://img.shields.io/badge/Gmail-EA4335?style=flat-square&logo=gmail&logoColor=white" />
-</p>
+This repository demonstrates how an email-based incident reporting system can evolve into a **scalable, AI-ready architecture** by combining workflow automation with vector embeddings and semantic search.
 
 ---
 
-## 📖 Overview
+## 🧩 What This Project Does
 
-This repository contains **two complementary n8n workflows** designed for modern municipal waste management:
+The system is built around **three integrated components**:
 
-### 1️⃣ Incident Report Automation
+### 1️⃣ Incident Processing Workflow
 
-* Monitors **Gmail**
-* Extracts structured data using **AI**
-* Detects duplicates
-* Classifies priority
-* Routes notifications intelligently
+Handles incoming incident reports and turns unstructured emails into actionable data.
 
-### 2️⃣ Vector Store Migration & Embedding
+**Key responsibilities**
 
-* Reads existing incidents from **MongoDB**
-* Chunks & embeds using **Google Gemini**
-* Upserts into **Pinecone Vector Database**
-* Preserves original MongoDB `_id` in metadata for traceability
-
-📌 Both workflows share the same MongoDB **`incidents`** collection and form the foundation for:
-
-* Semantic search
-* Similarity analysis
-* RAG applications
-* Future AI enhancements
+* Monitor incoming emails (Gmail)
+* Extract structured information using LLMs (description, location, intent)
+* Detect duplicates and classify priority
+* Route responses automatically (citizen reply or admin alert)
 
 ---
 
-## ✨ Features
+### 2️⃣ Vector Migration & Embedding Workflow
 
-### 🚨 Incident Report Workflow
+Transforms historical incident data into a **vector-based representation** for intelligent retrieval.
 
-* Real-time Gmail inbox monitoring
-* Groq-powered structured data extraction
-* Semantic + location-based duplicate detection
-* Automatic priority scoring (low / medium / high)
-* Conditional routing (citizen reply vs admin alert)
-* Contextual AI-generated email responses
+**Key responsibilities**
 
-### 🧠 Vector Migration Workflow
+* Read incidents from MongoDB
+* Clean, chunk, and embed text fields
+* Store vectors in Pinecone
+* Preserve MongoDB `_id` in metadata for traceability
 
-* Full or incremental migration from MongoDB
-* Smart text chunking & cleaning
-* High-quality embeddings using `gemini-embedding-001`
-* MongoDB `_id` stored as `metadata.original_id`
-* Efficient batch upsert to Pinecone
-* Ready for semantic search & similarity-based analytics
+---
+
+### 3️⃣ Similarity Service (FastAPI)
+
+Provides a **REST API** for real-time semantic search across stored incidents.
+
+**Key responsibilities**
+
+* Accept text queries via HTTP
+* Generate embeddings using Google Gemini
+* Query Pinecone for similar incidents
+* Return ranked matches with similarity scores
+
+Together, these components enable:
+
+* Semantic duplicate detection
+* Similarity-based analysis
+* RAG applications and intelligent search
+* Integration with external systems
+
+---
+
+## ✨ Core Features
+
+### 🚨 Incident Automation
+
+* Gmail inbox monitoring
+* AI-powered information extraction
+* Semantic + location-aware duplicate detection
+* Automatic priority scoring
+* Context-aware email responses
+
+### 🧠 Vector Store Pipeline
+
+* Batch or incremental migration
+* High-quality embeddings via Google Gemini
+* Metadata preservation for auditability
+* Optimized upserts to Pinecone
+* Ready for semantic search and AI agents
+
+### 🔍 Similarity API
+
+* RESTful endpoint for semantic search
+* Real-time embedding generation
+* Configurable similarity threshold and result count
+* Returns MongoDB IDs for cross-referencing
+* FastAPI with automatic OpenAPI docs
+
+---
+
+## 🏗️ Architecture Overview
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                     INCIDENT PROCESSING                      │
+└─────────────────────────────────────────────────────────────┘
+
+Gmail → n8n (AI extraction & routing) → MongoDB
+
+┌─────────────────────────────────────────────────────────────┐
+│                   VECTOR STORE PIPELINE                      │
+└─────────────────────────────────────────────────────────────┘
+
+MongoDB → Vector Migration Workflow → Embeddings (Gemini) → Pinecone
+
+┌─────────────────────────────────────────────────────────────┐
+│                    SIMILARITY SERVICE                        │
+└─────────────────────────────────────────────────────────────┘
+
+HTTP Request → FastAPI → Embed Query → Pinecone Search → JSON Response
+                  ↓
+            (returns MongoDB IDs)
+```
 
 ---
 
 ## 📂 Repository Structure
 
 ```text
-├── incident-report/
-│   └── incident_report.json          # Main incident processing workflow
-├── vector-migration/
-│   └── vector_migration.json         # Vector database population workflow
+incident_report_workflow/
 ├── README.md
-└── docs/
+├── incident_report/
+│   └── incident_report.json
+├── similarity-service/
+│   ├── .env.example
+│   ├── requirements.txt
+│   └── app/
+│       ├── __init__.py
+│       ├── embedding.py
+│       ├── main.py
+│       ├── pinecone_client.py
+│       └── schemas.py
+└── vector-migration/
+    ├── embeddingsGeneration.json
+    └── semantic_similarity_search_pinecone.ipynb
 ```
 
 ---
 
-## 🛠️ Prerequisites
+## 🛠️ Requirements
 
-* n8n (self-hosted or cloud, v1.0+ recommended)
-* MongoDB (with `incidents` collection)
-* Pinecone account & index
+**n8n Workflows**
 
-  * 3072 dimensions recommended for Gemini
-* Google Gemini API key (embeddings)
-* Groq API key (LLM extraction & generation)
+* n8n (v1.0+ recommended)
+* MongoDB (`incidents` collection)
 * Gmail OAuth2 credentials
+* Groq API key (LLM extraction & generation)
+* Google Gemini API key (embeddings)
 * Community nodes:
-
   * `@n8n/n8n-nodes-langchain`
   * `n8n-nodes-base.gmail`
   * `n8n-nodes-base.mongoDb`
 
+**Similarity Service**
+
+* Python 3.8+
+* Pinecone index (3072 dimensions for Gemini)
+* Google Gemini API key
+* Pinecone API key
+
 ---
 
-## 🚀 Quick Setup
+## 🚀 Getting Started
 
-### 1️⃣ Import workflows
+### 1️⃣ Import n8n workflows
 
 ```bash
-# Via n8n UI: Settings → Import from File
-# or CLI (self-hosted)
 n8n import:workflow --input=./incident-report/incident_report.json
 n8n import:workflow --input=./vector-migration/vector_migration.json
 ```
 
-### 2️⃣ Configure credentials
+### 2️⃣ Configure n8n credentials
 
-| Service       | Credential Type   | Used In                |
-| ------------- | ----------------- | ---------------------- |
-| Gmail         | OAuth2 API        | Trigger + Send nodes   |
-| MongoDB       | MongoDB           | All MongoDB operations |
-| Groq          | Groq API          | Chat Model nodes       |
-| Google Gemini | Google Gemini API | Embeddings sub-node    |
-| Pinecone      | Pinecone API      | Vector Store node      |
+Set up credentials inside n8n for:
 
----
+* Gmail
+* MongoDB
+* Groq
+* Google Gemini
+* Pinecone
 
-## 🔄 How the Workflows Connect
+### 3️⃣ Set up Similarity Service
 
-```text
-MongoDB ───────────────┐
-                       │
-Incident Report        │   Vector Migration
-   │                   │        │
-   ▼                   ▼        ▼
-Gmail → AI Extract → Duplicate Check
-                       MongoDB → Chunk → Embed (Gemini) → Pinecone
-   │                   │                   │
-   ▼                   ▼                   ▼
-Citizen/Admin Emails   New/Updated Record   Vector DB ready for search & RAG
+```bash
+cd similarity-service
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your API keys:
+# PINECONE_API_KEY=your_key
+# GEMINI_API_KEY=your_key
+# PINECONE_INDEX=incidents
+
+# Run the service
+uvicorn app.main:app --reload --port 8000
+```
+
+### 4️⃣ Test the API
+
+```bash
+curl -X POST "http://localhost:8000/similar-incidents" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "broken streetlight on Main Street",
+    "top_k": 5,
+    "min_score": 0.7
+  }'
+```
+
+**Response example:**
+
+```json
+{
+  "matches": [
+    {
+      "mongodb_id": "507f1f77bcf86cd799439011",
+      "score": 0.92,
+      "text": "Streetlight malfunction at Main St intersection"
+    },
+    {
+      "mongodb_id": "507f191e810c19729de860ea",
+      "score": 0.85,
+      "text": "Non-functioning light pole near Main Street"
+    }
+  ]
+}
 ```
 
 ---
 
-## 🎯 Customization Suggestions
+## 📡 API Reference
 
-* Switch to other embedders (Cohere, Voyage, OpenAI…)
-* Add metadata filtering in Pinecone queries
-* Implement incremental sync (only new/updated documents)
-* Build a semantic search API or chatbot
+### POST `/similar-incidents`
+
+Find semantically similar incidents from the vector database.
+
+**Request Body:**
+
+```json
+{
+  "text": "string",        // Query text to find similar incidents
+  "top_k": 5,              // Number of results (default: 5)
+  "min_score": 0.7         // Minimum similarity score 0-1 (default: 0.7)
+}
+```
+
+**Response:**
+
+```json
+{
+  "matches": [
+    {
+      "mongodb_id": "string",  // Original MongoDB document ID
+      "score": 0.92,            // Similarity score (0-1)
+      "text": "string"          // Matched incident text
+    }
+  ]
+}
+```
+
+**Interactive docs:** `http://localhost:8000/docs` (when running)
 
 ---
 
-## ⚠️ Current Limitations & Workarounds
+## ⚠️ Notes & Design Decisions
 
-* **Pinecone Vector Store node auto-generates IDs**
-  → Store MongoDB `_id` as `metadata.original_id` for traceability
+* Pinecone auto-generates vector IDs
+  → MongoDB `_id` is stored as metadata for traceability
 
-* **Large collections may slow n8n**
-  → Use **Split In Batches** node before processing
+* Large datasets
+  → Use **Split In Batches** to avoid performance issues in n8n
 
 ---
 
-## 💬 Author & Contact
+## 🎯 Possible Extensions
+
+* Incremental sync (only new or updated incidents)
+* Metadata-based filtering in vector search
+* Webhook integration from n8n to similarity service
+* Chatbot layer using the similarity API
+* Alternative embedding providers (OpenAI, Cohere, Voyage)
+* Authentication & rate limiting for production
+* Caching layer for frequent queries
+
+---
+
+## 👤 Author
 
 **Mohamed Aziz Mabrouk**
-📅 January 2026
+January 2026
 
-Built with ❤️ for smarter waste management systems.
+Built with a focus on **automation, clarity, and future AI extensibility**.
 
-Questions, improvements, or collaboration?
-👉 **Open an issue!** 
-
-
----
-
-## 🔗 Useful Resources
-
-* n8n Documentation
-* Pinecone Documentation
-* Google Gemini Embeddings
-* Groq API Reference
+Feel free to open an issue for questions or improvements.
 
